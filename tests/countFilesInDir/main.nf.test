@@ -1,0 +1,59 @@
+nextflow_pipeline {
+
+    name "Test countFilesInDir"
+    script "./main.nf"
+    tag "countFilesInDir"
+
+    test("countFilesInDir") {
+            when {
+                params {
+                    outdir = "$outputDir"
+                }
+            }
+
+            then {
+              // Use countFilesInDir() to get a count of files in the output directory
+              def files_in_outdir        = countFilesInDir(params.outdir)
+              assert snapshot(
+                // Snapshot total files in outdir
+                files_in_outdir
+              ).match()
+            }
+        }
+
+    test("countFilesInDir - ignore some files") {
+            when {
+                params {
+                    outdir = "$outputDir"
+                }
+            }
+
+            then {
+              // Use countFilesInDir() to get a count of files in the output directory, except some specific files in a subdirectory
+              def stable_name        = countFilesInDir(params.outdir,  ignore: ['pipeline_info/execution_*.{html,txt}'])
+                assert snapshot(
+                // Only snapshot name
+                stable_name,
+              ).match()
+            }
+        }
+
+    test("countFilesInDir - ignore a filetype") {
+            when {
+                params {
+                    outdir = "$outputDir"
+                }
+            }
+
+            then {
+              println(getAllFilesFromDir(params.outdir))
+              // Use countFilesInDir() to get a count of files in the output directory, except a specific type
+              def stable_name        = countFilesInDir(params.outdir,  ignore: ['**/*.zip'])
+                assert snapshot(
+                // Only snapshot name
+                stable_name,
+              ).match()
+            }
+        }
+
+}

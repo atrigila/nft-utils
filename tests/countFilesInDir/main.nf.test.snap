@@ -1,0 +1,32 @@
+{
+    "countFilesInDir - ignore a filetype": {
+        "content": [
+            4
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.0"
+        },
+        "timestamp": "2024-11-15T21:57:49.331187424"
+    },
+    "countFilesInDir": {
+        "content": [
+            5
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.0"
+        },
+        "timestamp": "2024-11-15T21:37:38.142279268"
+    },
+    "countFilesInDir - ignore some files": {
+        "content": [
+            4
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "24.10.0"
+        },
+        "timestamp": "2024-11-15T21:37:43.533042942"
+    }
+}

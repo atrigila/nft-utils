@@ -97,6 +97,79 @@ public class Methods {
     }
   }
 
+  // Count total number of files in a directory and its subdirectories
+  public static int countFilesInDir(LinkedHashMap<String, Object> options, String outdir) throws IOException {
+      if (outdir == null || outdir.isEmpty()) {
+          throw new IllegalArgumentException("The 'outdir' parameter is required.");
+      }
+
+      // Check if path exists
+      Path dirPath = Paths.get(outdir);
+      if (!Files.exists(dirPath)) {
+          throw new IllegalArgumentException("The specified path does not exist: " + outdir);
+      }
+
+      // Check if it's a directory
+      if (!Files.isDirectory(dirPath)) {
+          throw new IllegalArgumentException("The specified path is not a directory: " + outdir);
+      }
+
+      // Extract optional parameters from the map (use defaults if not provided)
+      Boolean includeDir = (Boolean) options.getOrDefault("includeDir", false);
+      List<String> ignoreGlobs = (List<String>) options.getOrDefault("ignore", new ArrayList<String>());
+      String ignoreFilePath = (String) options.get("ignoreFile");
+      List<String> includeGlobs = (List<String>) options.getOrDefault("include", Arrays.asList("*", "**/*"));
+
+      final int[] fileCount = {0};
+
+      List<String> allIgnoreGlobs = new ArrayList<>(ignoreGlobs);
+      if (ignoreFilePath != null && !ignoreFilePath.isEmpty()) {
+          allIgnoreGlobs.addAll(readGlobsFromFile(ignoreFilePath));
+      }
+
+      List<PathMatcher> excludeMatchers = allIgnoreGlobs.stream()
+          .map(glob -> FileSystems.getDefault().getPathMatcher("glob:" + glob))
+          .collect(Collectors.toList());
+
+      List<PathMatcher> includeMatchers = includeGlobs.stream()
+          .map(glob -> FileSystems.getDefault().getPathMatcher("glob:" + glob))
+          .collect(Collectors.toList());
+
+      Files.walkFileTree(dirPath, new SimpleFileVisitor<Path>() {
+          @Override
+          public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+              if (isIncluded(file) && !isExcluded(file)) {
+                  fileCount[0]++;
+              }
+              return FileVisitResult.CONTINUE;
+          }
+
+          @Override
+          public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+              if (includeDir && isIncluded(dir) && !isExcluded(dir) && !dir.getFileName().toString().equals("output")) {
+                  fileCount[0]++;
+              }
+              return FileVisitResult.CONTINUE;
+          }
+
+          private boolean isExcluded(Path path) {
+              return excludeMatchers.stream().anyMatch(matcher -> matcher.matches(dirPath.relativize(path)));
+          }
+
+          private boolean isIncluded(Path path) {
+              return includeMatchers.stream().anyMatch(matcher -> matcher.matches(dirPath.relativize(path)));
+          }
+      });
+
+      return fileCount[0];
+  }
+
+  // Wrapper function for countFilesInDir with default options
+  public static int countFilesInDir(String outdir) throws IOException {
+      return countFilesInDir(new LinkedHashMap<>(), outdir);
+  }
+
+
   // Return all files in a directory and its sub-directories
   // matching or not matching supplied glob
   public static List<File> getAllFilesFromDir(String outdir, boolean includeDir, List<String> ignoreGlobs,
